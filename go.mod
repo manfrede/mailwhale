@@ -4,15 +4,15 @@ go 1.18
 
 require (
 	github.com/emersion/go-sasl v0.0.0-20220912192320-0145f2c60ead
-	github.com/emersion/go-smtp v0.17.0
+	github.com/emersion/go-smtp v0.18.1
 	github.com/emvi/logbuch v1.2.0
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.3.1
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0
 	github.com/jinzhu/configor v1.2.1
-	github.com/rs/cors v1.9.0
+	github.com/rs/cors v1.10.0
 	github.com/timshannon/bolthold v0.0.0-20210913165410-232392fc8a6a
-	golang.org/x/crypto v0.11.0
+	golang.org/x/crypto v0.13.0
 )
 
 require (
