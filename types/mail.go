@@ -2,9 +2,10 @@ package types
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -73,10 +74,10 @@ func (m *Mail) Reader() *strings.Reader {
 }
 
 type MailSendRequest struct {
-	To           MailAddresses     `json:"to"`
-	Subject      string            `json:"subject"`
-	Text         string            `json:"text"`
-	Html         string            `json:"html"`
-	TemplateId   string            `json:"template_id"`
-	TemplateVars map[string]string `json:"template_vars"`
+	To           MailAddresses          `json:"to"`
+	Subject      string                 `json:"subject"`
+	Text         string                 `json:"text"`
+	Html         string                 `json:"html"`
+	TemplateId   string                 `json:"template_id"`
+	TemplateVars map[string]interface{} `json:"template_vars"`
 }

@@ -1,8 +1,9 @@
 package types
 
 import (
-	"regexp"
 	"strings"
+
+	"github.com/hoisie/mustache"
 )
 
 type Template struct {
@@ -12,13 +13,9 @@ type Template struct {
 	Content string `json:"content"`
 }
 
-func (t *Template) FillContent(vars map[string]string) string {
+func (t *Template) FillContent(vars map[string]interface{}) string {
 	content := t.Content
-	for k, v := range vars {
-		re := regexp.MustCompile("{{\\s*" + k + "\\s*}}")
-		content = re.ReplaceAllString(content, v)
-	}
-	return content
+	return mustache.Render(content, vars)
 }
 
 func (t *Template) GuessIsHtml() bool {

@@ -2,14 +2,15 @@ package api
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/gorilla/mux"
 	conf "github.com/muety/mailwhale/config"
 	"github.com/muety/mailwhale/service"
 	"github.com/muety/mailwhale/types"
 	"github.com/muety/mailwhale/util"
 	"github.com/muety/mailwhale/web/handlers"
-	"io/ioutil"
-	"net/http"
 )
 
 const routeTemplate = "/api/template"
@@ -157,7 +158,7 @@ func (h *TemplateHandler) render(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var payload map[string]string
+	var payload map[string]interface{}
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		util.RespondError(w, r, http.StatusBadRequest, err)
 		return
