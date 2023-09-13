@@ -1,6 +1,14 @@
 package main
 
 import (
+	"context"
+	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/emvi/logbuch"
 	ghandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -10,8 +18,6 @@ import (
 	"github.com/muety/mailwhale/web/routes/api"
 	"github.com/rs/cors"
 	"github.com/timshannon/bolthold"
-	"net/http"
-	"time"
 )
 
 var (
@@ -76,24 +82,59 @@ func main() {
 	})
 
 	listen(handler, config)
+
 }
 
 func listen(handler http.Handler, config *conf.Config) {
 	var s4 *http.Server
+	ctx, cancel := context.WithCancel(context.Background())
 
 	s4 = &http.Server{
 		Handler:      handler,
 		Addr:         config.Web.ListenAddr,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
+		BaseContext:  func(_ net.Listener) context.Context { return ctx },
 	}
 
 	go func() {
 		logbuch.Info("web server started, listening on %s", config.Web.ListenAddr)
-		if err := s4.ListenAndServe(); err != nil {
+		if err := s4.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logbuch.Fatal("failed to start web server: %v", err)
 		}
 	}()
 
-	<-make(chan interface{}, 1)
+	signalChan := make(chan os.Signal, 1)
+
+	signal.Notify(
+		signalChan,
+		syscall.SIGHUP,  // kill -SIGHUP XXXX
+		syscall.SIGINT,  // kill -SIGINT XXXX or Ctrl+c
+		syscall.SIGQUIT, // kill -SIGQUIT XXXX
+	)
+
+	<-signalChan
+	logbuch.Info("os.Interrupt - shutting down...\n")
+
+	go func() {
+		<-signalChan
+		logbuch.Fatal("os.Kill - terminating...\n")
+	}()
+
+	gracefullCtx, cancelShutdown := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelShutdown()
+
+	if err := s4.Shutdown(gracefullCtx); err != nil {
+		logbuch.Warn("shutdown error: %v\n", err)
+		defer os.Exit(1)
+		return
+	} else {
+		logbuch.Info("gracefully stopped\n")
+	}
+
+	// manually cancel context if not using server.RegisterOnShutdown(cancel)
+	cancel()
+
+	defer os.Exit(0)
+	return
 }
