@@ -17,25 +17,18 @@ type SPAHandler struct {
 }
 
 func (h *SPAHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	path, err := filepath.Abs(r.URL.Path)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	// Join internally call path.Clean to prevent directory traversal
+	path := filepath.Join(h.StaticPath, r.URL.Path)
 
-	path = filepath.Join(h.StaticPath, path)
-
-	_, err = os.Stat(path)
-	if os.IsNotExist(err) || r.URL.Path == "/" {
-		if len(h.indexContent) == 0 || h.NoCache {
-			h.loadIndex()
-		}
-
-		w.Header().Set("content-type", "text/html")
-		w.WriteHeader(http.StatusOK)
-		w.Write(h.indexContent)
+	// check whether a file exists at the given path
+	_, err := os.Stat(path)
+	if os.IsNotExist(err) {
+		// file does not exist, serve index.html
+		http.ServeFile(w, r, filepath.Join(h.StaticPath, h.IndexPath))
 		return
 	} else if err != nil {
+		// if we got an error (that wasn't that the file doesn't exist) stating the
+		// file, return a 500 internal server error and stop
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
